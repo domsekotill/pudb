@@ -1,38 +1,41 @@
 from __future__ import absolute_import, division, print_function
 
+import sys
+import argparse
+import importlib
+from os import path
+
 
 def main():
-    import sys
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--steal-output', '-s',
+        action='store_true',
+    )
+    parser.add_argument('--pre-run',
+        metavar='COMMAND', default='',
+        help="Run command before each program run",
+    )
+    run_group = parser.add_mutually_exclusive_group()
+    run_group.add_argument('--module', '-m',
+        help="Run MODULE as a script",
+    )
+    run_group.add_argument('script',
+        nargs='?',
+        help="Run SCRIPT"
+    )
+    parser.add_argument('arguments', nargs='*')
 
-    from optparse import OptionParser
-    parser = OptionParser(
-            usage="usage: %prog [options] SCRIPT-TO-RUN [SCRIPT-ARGUMENTS]")
-
-    parser.add_option("-s", "--steal-output", action="store_true"),
-    parser.add_option("--pre-run", metavar="COMMAND",
-            help="Run command before each program run",
-            default="")
-    parser.disable_interspersed_args()
-    options, args = parser.parse_args()
-
-    if len(args) < 1:
-        parser.print_help()
-        sys.exit(2)
-
-    mainpyfile = args[0]
-
-    from os.path import exists
-    if not exists(mainpyfile):
-        print('Error: %s does not exist' % mainpyfile)
-        sys.exit(1)
-
-    sys.argv = args
+    options = parser.parse_args()
 
     from pudb import runscript
-    runscript(mainpyfile,
+    runscript(options.module or options.script,
+            as_module=bool(options.module),
+            args=options.arguments,
             pre_run=options.pre_run,
             steal_output=options.steal_output)
 
 
 if __name__ == '__main__':
     main()
+
+# vim: foldmethod=marker:expandtab:softtabstop=4
