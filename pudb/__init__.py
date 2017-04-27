@@ -60,8 +60,22 @@ DEFAULT_SIGNAL = signal.SIGINT
 del signal
 
 
-def runscript(mainpyfile, args=None, pre_run="", steal_output=False):
+def runscript(name, as_module=False, args=None, pre_run="", steal_output=False):
     dbg = _get_debugger(steal_output=steal_output)
+
+    import sys
+    prev_sys_path = sys.path[:]
+
+    if as_module:
+        import importlib
+        sys.path[0] = ''
+        module = importlib.import_module(name)
+        filename = module.__file__
+    else:
+        from os.path import dirname
+        module = None
+        filename = name
+        sys.path[0] = dirname(filename)
 
     # Note on saving/restoring sys.argv: it's a good idea when sys.argv was
     # modified by the script being debugged. It's a bad idea when it was
@@ -69,15 +83,9 @@ def runscript(mainpyfile, args=None, pre_run="", steal_output=False):
     # have a "restart" command which would allow explicit specification of
     # command line arguments.
 
-    import sys
     if args is not None:
         prev_sys_argv = sys.argv[:]
-        sys.argv = [mainpyfile] + args
-
-    # replace pudb's dir with script's dir in front of module search path.
-    from os.path import dirname
-    prev_sys_path = sys.path[:]
-    sys.path[0] = dirname(mainpyfile)
+        sys.argv = [filename] + args
 
     while True:
         if pre_run:
@@ -90,7 +98,7 @@ def runscript(mainpyfile, args=None, pre_run="", steal_output=False):
         status_msg = ""
 
         try:
-            dbg._runscript(mainpyfile)
+            dbg._runscript(module, filename)
         except SystemExit:
             se = sys.exc_info()[1]
             status_msg = "The debuggee exited normally with " \
