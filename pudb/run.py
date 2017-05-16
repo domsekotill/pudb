@@ -30,7 +30,7 @@ def main():
 
     arg_group = parser.add_argument_group(title="Run arguments")
     arg_group.add_argument('arguments',
-        nargs='*',
+        nargs=argparse.REMAINDER,
         help="Arguments for the script or module",
     )
 
