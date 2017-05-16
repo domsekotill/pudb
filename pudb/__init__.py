@@ -67,10 +67,14 @@ def runscript(name, as_module=False, args=None, pre_run="", steal_output=False):
     prev_sys_path = sys.path[:]
 
     if as_module:
-        import importlib
+        from importlib.util import find_spec
         sys.path[0] = ''
-        module = importlib.import_module(name)
-        filename = module.__file__
+        spec = find_spec(name)
+        # if a package, use __main__ module as `filename`
+        if spec.submodule_search_locations:
+            spec = find_spec(name + '.__main__', name)
+        module = name
+        filename = spec.origin
     else:
         from os.path import dirname
         module = None

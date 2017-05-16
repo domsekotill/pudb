@@ -403,8 +403,6 @@ class Debugger(bdb.Bdb):
             self.interaction(frame, exc_tuple)
 
     def _runscript(self, module, filename):
-        assert module is None or module.__file__ == filename
-
         # When bdb sets tracing, a number of call and line events happens
         # BEFORE debugger even reaches user's code (and the exact sequence of
         # events depends on python version). So we take special measures to
@@ -420,7 +418,7 @@ class Debugger(bdb.Bdb):
         import runpy
         if module:
             self.runcall(
-                runpy.run_module, module.__name__,
+                runpy.run_module, module,
                 run_name='__main__', alter_sys=True,
             )
         else:
