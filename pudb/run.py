@@ -36,7 +36,7 @@ def main():
 
     options = parser.parse_args()
 
-    if options.module:
+    if options.module and options.script:
         # `script` is actually the first `arguments`
         options.arguments.insert(0, options.script)
         options.script = None
