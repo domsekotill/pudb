@@ -15,7 +15,11 @@ def main():
         metavar='COMMAND', default='',
         help="Run command before each program run",
     )
-    run_group = parser.add_mutually_exclusive_group()
+
+    run_group = parser.add_argument_group(
+        title="Run options",
+        description="One of the following:"
+    )
     run_group.add_argument('--module', '-m',
         help="Run MODULE as a script",
     )
@@ -23,9 +27,19 @@ def main():
         nargs='?',
         help="Run SCRIPT"
     )
-    parser.add_argument('arguments', nargs='*')
+
+    arg_group = parser.add_argument_group(title="Run arguments")
+    arg_group.add_argument('arguments',
+        nargs='*',
+        help="Arguments for the script or module",
+    )
 
     options = parser.parse_args()
+
+    if options.module:
+        # `script` is actually the first `arguments`
+        options.arguments.insert(0, options.script)
+        options.script = None
 
     from pudb import runscript
     runscript(options.module or options.script,
