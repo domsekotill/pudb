@@ -50,9 +50,7 @@ def debugger(self, force=False):
         return
 
     from pudb import pm
-
-    with self.readline_no_record:
-        pm()
+    pm()
 
 
 ip = get_ipython()
