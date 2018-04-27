@@ -10,6 +10,17 @@ if py_version_major == 3:
 else:
     PY_VERSION = ''
 
+install_requires = [
+  "urwid>=1.1.1",
+  "pygments>=1.0",
+]
+
+if sys.version_info[:2] <= (2,6):
+    install_requires.extend([
+        'argparse>=1.0',
+        'importlib>=1.0',
+    ])
+
 try:
     readme = open("README.rst")
     long_description = str(readme.read())
@@ -22,10 +33,7 @@ setup(name='pudb',
       long_description=long_description,
       author='Andreas Kloeckner',
       author_email='inform@tiker.net',
-      install_requires=[
-          "urwid>=1.1.1",
-          "pygments>=1.0",
-          ],
+      install_requires=install_requires,
       test_requires=[
           "pytest>=2",
           ],

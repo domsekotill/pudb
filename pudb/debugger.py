@@ -430,13 +430,7 @@ class Debugger(bdb.Bdb):
         if not self._wait_for_mainpyfile:
             self.interaction(frame, exc_tuple)
 
-    def _runscript(self, filename):
-        # Start with fresh empty copy of globals and locals and tell the script
-        # that it's being run as __main__ to avoid scripts being able to access
-        # the debugger's namespace.
-        globals_ = {"__name__": "__main__", "__file__": filename}
-        locals_ = globals_
-
+    def _runscript(self, module, filename):
         # When bdb sets tracing, a number of call and line events happens
         # BEFORE debugger even reaches user's code (and the exact sequence of
         # events depends on python version). So we take special measures to
@@ -444,17 +438,22 @@ class Debugger(bdb.Bdb):
         # user_call for details).
         self._wait_for_mainpyfile = 1
         self.mainpyfile = self.canonic(filename)
-        if PY3:
-            statement = 'exec(compile(open("%s").read(), "%s", "exec"))' % (
-                    filename, filename)
-        else:
-            statement = 'execfile( "%s")' % filename
 
         # Set up an interrupt handler
         from pudb import set_interrupt_handler
         set_interrupt_handler()
 
-        self.run(statement, globals=globals_, locals=locals_)
+        import runpy
+        if module:
+            self.runcall(
+                runpy.run_module, module,
+                run_name='__main__', alter_sys=True,
+            )
+        else:
+            self.runcall(
+                runpy.run_path, filename,
+                run_name='__main__',
+            )
 
 # }}}
 
