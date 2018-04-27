@@ -225,11 +225,23 @@ custom_stringifier_dict = {}
 def type_stringifier(value):
     if HAVE_NUMPY and isinstance(value, numpy.ndarray):
         return "ndarray %s %s" % (value.dtype, value.shape)
+
     elif isinstance(value, STR_SAFE_TYPES):
         try:
             return str(value)
         except Exception:
             pass
+
+    elif hasattr(value, "safely_stringify_for_pudb"):
+        try:
+            # (E.g.) Mock objects will pretend to have this
+            # and return nonsense.
+            result = value.safely_stringify_for_pudb()
+        except Exception:
+            pass
+        else:
+            if isinstance(result, string_types):
+                return result
 
     return type(value).__name__
 

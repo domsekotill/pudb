@@ -382,6 +382,9 @@ class Debugger(bdb.Bdb):
 
     def user_return(self, frame, return_value):
         """This function is called when a return trap is set here."""
+        if frame.f_code.co_name == '<module>':
+            return
+
         frame.f_locals['__return__'] = return_value
 
         if self._wait_for_mainpyfile:
@@ -1765,6 +1768,8 @@ class DebuggerUI(FrameVarInfoKeeper):
                 runner = shell.run_bpython_shell
             elif CONFIG["shell"] == "ptpython" and shell.HAVE_PTPYTHON:
                 runner = shell.run_ptpython_shell
+            elif CONFIG["shell"] == "ptipython" and shell.HAVE_PTIPYTHON:
+                runner = shell.run_ptipython_shell
             elif CONFIG["shell"] == "classic":
                 runner = shell.run_classic_shell
             else:
@@ -2099,7 +2104,7 @@ class DebuggerUI(FrameVarInfoKeeper):
                 self.message("Package 'pygments' not found. "
                         "Syntax highlighting disabled.")
 
-        WELCOME_LEVEL = "e031"  # noqa
+        WELCOME_LEVEL = "e033"  # noqa
         if CONFIG["seen_welcome"] < WELCOME_LEVEL:
             CONFIG["seen_welcome"] = WELCOME_LEVEL
             from pudb import VERSION
@@ -2115,6 +2120,16 @@ class DebuggerUI(FrameVarInfoKeeper):
                     "If you're new here, welcome! The help screen "
                     "(invoked by hitting '?' after this message) should get you "
                     "on your way.\n"
+
+                    "\nChanges in version 2017.1.4:\n\n"
+                    "- Bug fixes.\n"
+
+                    "\nChanges in version 2017.1.3:\n\n"
+                    "- Add handling of safely_stringify_for_pudb to allow custom \n"
+                    "  per-type stringification.\n"
+                    "- Add support for custom shells.\n"
+                    "- Better support for 2-wide characters in the var view.\n"
+                    "- Bug fixes.\n"
 
                     "\nChanges in version 2017.1.2:\n\n"
                     "- Bug fixes.\n"
