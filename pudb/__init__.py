@@ -114,10 +114,9 @@ del signal
 
 
 def runscript(name, as_module=False, args=None, pre_run="", steal_output=False):
-    dbg = _get_debugger(steal_output=steal_output)
-
     import sys
     prev_sys_path = sys.path[:]
+    prev_sys_argv = sys.argv[:]
 
     if as_module:
         from importlib.util import find_spec
@@ -140,9 +139,19 @@ def runscript(name, as_module=False, args=None, pre_run="", steal_output=False):
     # have a "restart" command which would allow explicit specification of
     # command line arguments.
 
-    if args is not None:
-        prev_sys_argv = sys.argv[:]
-        sys.argv = [filename] + args
+    sys.argv = [filename] + (args or [])
+
+    try:
+        _runscript(module, filename, pre_run, steal_output)
+    finally:
+        sys.argv = prev_sys_argv
+        sys.path = prev_sys_path
+
+
+def _runscript(module, filename, pre_run, steal_output):
+    import sys
+
+    dbg = _get_debugger(steal_output=steal_output)
 
     while True:
         if pre_run:
@@ -207,11 +216,6 @@ def runscript(name, as_module=False, args=None, pre_run="", steal_output=False):
         pre_run = pre_run_edit.get_edit_text()
 
         dbg.restart()
-
-    if args is not None:
-        sys.argv = prev_sys_argv
-
-    sys.path = prev_sys_path
 
 
 def runstatement(statement, globals=None, locals=None):
