@@ -44,7 +44,7 @@ from pudb.py3compat import PY3, raw_input, execfile
 CONFIG = load_config()
 save_config(CONFIG)
 
-HELP_TEXT = """\
+HELP_TEXT = r"""\
 Welcome to PuDB, the Python Urwid debugger.
 -------------------------------------------
 
@@ -106,7 +106,7 @@ Sidebar-related (active in sidebar):
     [/] - grow/shrink relative size of active sidebar box
 
 Keys in variables list:
-    \ - expand/collapse
+    \/space - expand/collapse
     t/r/s/c - show type/repr/str/custom for this variable
     h - toggle highlighting
     @ - toggle repetition at top
@@ -159,8 +159,10 @@ OTHER DEALINGS IN THE SOFTWARE.
 # {{{ debugger interface
 
 class Debugger(bdb.Bdb):
-    def __init__(self, stdin=None, stdout=None, term_size=None, steal_output=False):
-        bdb.Bdb.__init__(self)
+    def __init__(self, stdin=None, stdout=None, term_size=None, steal_output=False,
+            **kwargs):
+        # Pass remaining kwargs to python debugger framework
+        bdb.Bdb.__init__(self, **kwargs)
         self.ui = DebuggerUI(self, stdin=stdin, stdout=stdout, term_size=term_size)
         self.steal_output = steal_output
 
@@ -613,10 +615,8 @@ class DirectSourceCodeProvider(SourceCodeProvider):
     def __eq__(self, other):
         return (
                 type(self) == type(other)
-                and
-                self.function_name == other.function_name
-                and
-                self.code is other.code)
+                and self.function_name == other.function_name
+                and self.code is other.code)
 
     def identifier(self):
         return "<source code of function %s>" % self.function_name
@@ -775,7 +775,7 @@ class DebuggerUI(FrameVarInfoKeeper):
             iinfo = self.get_frame_var_info(read_only=False) \
                     .get_inspect_info(var.id_path, read_only=False)
 
-            if key == "\\":
+            if key == "\\" or key == ' ':
                 iinfo.show_detail = not iinfo.show_detail
             elif key == "t":
                 iinfo.display_type = "type"
@@ -860,10 +860,10 @@ class DebuggerUI(FrameVarInfoKeeper):
                     "Show methods", iinfo.show_methods)
 
             lb = urwid.ListBox(urwid.SimpleListWalker(
-                id_segment +
-                rb_grp_show + [urwid.Text("")] +
-                rb_grp_access + [urwid.Text("")] +
-                [
+                id_segment
+                + rb_grp_show + [urwid.Text("")]
+                + rb_grp_access + [urwid.Text("")]
+                + [
                     wrap_checkbox,
                     expanded_checkbox,
                     highlighted_checkbox,
@@ -927,6 +927,7 @@ class DebuggerUI(FrameVarInfoKeeper):
                 self.update_var_view()
 
         self.var_list.listen("\\", change_var_state)
+        self.var_list.listen(" ", change_var_state)
         self.var_list.listen("t", change_var_state)
         self.var_list.listen("r", change_var_state)
         self.var_list.listen("s", change_var_state)
@@ -1294,6 +1295,8 @@ class DebuggerUI(FrameVarInfoKeeper):
 
             def mod_exists(mod):
                 if not hasattr(mod, "__file__"):
+                    return False
+                if mod.__file__ is None:
                     return False
                 filename = mod.__file__
 
@@ -1883,11 +1886,9 @@ class DebuggerUI(FrameVarInfoKeeper):
                 CONFIG["display"] == "curses"
                 or (
                     CONFIG["display"] == "auto"
-                    and
-                    not (
+                    and not (
                         os.environ.get("TERM", "").startswith("xterm")
-                        or
-                        os.environ.get("TERM", "").startswith("rxvt")
+                        or os.environ.get("TERM", "").startswith("rxvt")
                     )))
 
         if (want_curses_display
@@ -2133,7 +2134,7 @@ class DebuggerUI(FrameVarInfoKeeper):
                 self.message("Package 'pygments' not found. "
                         "Syntax highlighting disabled.")
 
-        WELCOME_LEVEL = "e033"  # noqa
+        WELCOME_LEVEL = "e034"  # noqa
         if CONFIG["seen_welcome"] < WELCOME_LEVEL:
             CONFIG["seen_welcome"] = WELCOME_LEVEL
             from pudb import VERSION
@@ -2149,6 +2150,9 @@ class DebuggerUI(FrameVarInfoKeeper):
                     "If you're new here, welcome! The help screen "
                     "(invoked by hitting '?' after this message) should get you "
                     "on your way.\n"
+
+                    "\nChanges in version 2018.1:\n\n"
+                    "- Bug fixes.\n"
 
                     "\nChanges in version 2017.1.4:\n\n"
                     "- Bug fixes.\n"

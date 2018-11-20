@@ -26,7 +26,7 @@ THE SOFTWARE.
 """
 
 
-NUM_VERSION = (2017, 1, 4)
+NUM_VERSION = (2018, 1)
 VERSION = ".".join(str(nv) for nv in NUM_VERSION)
 __version__ = VERSION
 
@@ -70,8 +70,35 @@ else:
 CURRENT_DEBUGGER = []
 
 
+def _tty_override():
+    import os
+    return os.environ.get('PUDB_TTY')
+
+
+def _open_tty(tty_path):
+    import io
+    import os
+    import sys
+    if sys.version_info[0] == 2:
+        tty_file = open(tty_path, 'r+b', buffering=0)
+        term_size = None
+    else:
+        tty_file = io.TextIOWrapper(open(tty_path, 'r+b', buffering=0))
+        term_size = os.get_terminal_size(tty_file.fileno())
+
+    return tty_file, term_size
+
+
 def _get_debugger(**kwargs):
     if not CURRENT_DEBUGGER:
+        tty_path = _tty_override()
+        if tty_path and ('stdin' not in kwargs or 'stdout' not in kwargs):
+            tty_file, term_size = _open_tty(tty_path)
+
+            kwargs.setdefault('stdin', tty_file)
+            kwargs.setdefault('stdout', tty_file)
+            kwargs.setdefault('term_size', term_size)
+
         from pudb.debugger import Debugger
         dbg = Debugger(**kwargs)
 
