@@ -6,7 +6,7 @@ import importlib
 from os import path
 
 
-def main():
+def main(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('--steal-output', '-s',
         action='store_true',
@@ -34,7 +34,7 @@ def main():
         help="Arguments for the script or module",
     )
 
-    options = parser.parse_args()
+    options = parser.parse_args(args)
 
     if options.module and options.script:
         # `script` is actually the first `arguments`
